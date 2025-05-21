@@ -20,5 +20,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Android-Image-Cropper"
-include(":app")
- 
+//include(":ImageCropper", ":sample-app")
+include(":ImageCropper")
+include(":sample-app")
