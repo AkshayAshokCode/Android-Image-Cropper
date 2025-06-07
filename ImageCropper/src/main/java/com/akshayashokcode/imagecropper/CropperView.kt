@@ -37,13 +37,6 @@ class CropperView @JvmOverloads constructor(
 
     private var currentTouch = TouchArea.NONE
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        val size = min(w, h) * 0.8f
-        val left = (w - size) / 2f
-        val top = (h - size) / 2f
-        cropRect.set(left, top, left + size, top + size)
-    }
-
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val x = event.x
         val y = event.y
@@ -63,7 +56,7 @@ class CropperView @JvmOverloads constructor(
                 when (currentTouch) {
                     TouchArea.MOVE -> {
                         cropRect.offset(dx, dy)
-                        constrainCropRectToBounds()
+                        constrainCropRectToImageBounds()
                     }
 
                     TouchArea.TOP_LEFT -> {
@@ -97,7 +90,7 @@ class CropperView @JvmOverloads constructor(
                     else -> {}
                 }
 
-                constrainCropRectToBounds()
+                constrainCropRectToImageBounds()
                 lastTouchX = x
                 lastTouchY = y
                 invalidate()
@@ -124,13 +117,6 @@ class CropperView @JvmOverloads constructor(
 
     private fun isNear(x1: Float, y1: Float, x2: Float, y2: Float): Boolean {
         return abs(x1 - x2) < touchThreshold && abs(y1 - y2) < touchThreshold
-    }
-
-    private fun constrainCropRectToBounds() {
-        cropRect.left = cropRect.left.coerceIn(0f, width.toFloat() - minCropSize)
-        cropRect.top = cropRect.top.coerceIn(0f, height.toFloat() - minCropSize)
-        cropRect.right = cropRect.right.coerceIn(minCropSize, width.toFloat())
-        cropRect.bottom = cropRect.bottom.coerceIn(minCropSize, height.toFloat())
     }
 
     private val overlayPaint = Paint().apply { color = "#B0000000".toColorInt() }
@@ -165,6 +151,46 @@ class CropperView @JvmOverloads constructor(
         paint.color = Color.WHITE
         paint.strokeWidth = 4f
         canvas.drawRect(cropRect, paint)
+
+        // Draw 3x3 grid lines inside cropRect
+        val oneThirdWidth = cropRect.width() / 3f
+        val oneThirdHeight = cropRect.height() / 3f
+
+        paint.color = Color.WHITE
+        paint.strokeWidth = 2f
+
+        // 2 vertical grid lines
+        canvas.drawLine(
+            cropRect.left + oneThirdWidth,
+            cropRect.top,
+            cropRect.left + oneThirdWidth,
+            cropRect.bottom,
+            paint
+        )
+        canvas.drawLine(
+            cropRect.left + 2 * oneThirdWidth,
+            cropRect.top,
+            cropRect.left + 2 * oneThirdWidth,
+            cropRect.bottom,
+            paint
+        )
+
+        // 2 horizontal grid lines
+        canvas.drawLine(
+            cropRect.left,
+            cropRect.top + oneThirdHeight,
+            cropRect.right,
+            cropRect.top + oneThirdHeight,
+            paint
+        )
+        canvas.drawLine(
+            cropRect.left,
+            cropRect.top + 2 * oneThirdHeight,
+            cropRect.right,
+            cropRect.top + 2 * oneThirdHeight,
+            paint
+        )
+
 
         // Draw L-shaped corners
         val handleLength = 40f
@@ -252,8 +278,14 @@ class CropperView @JvmOverloads constructor(
         matrix.postScale(scale, scale)
         matrix.postTranslate(dx, dy)
 
+        // Set cropRect to cover the full visible image area
+        val bitmapRect = RectF(0f, 0f, imageWidth, imageHeight)
+        matrix.mapRect(bitmapRect)
+        cropRect.set(bitmapRect)
+
         invalidate()
     }
+
 
     fun getCroppedImage(): Bitmap? {
         val bmp = bitmap ?: return null
@@ -268,5 +300,39 @@ class CropperView @JvmOverloads constructor(
         val srcHeight = mappedRect.height().toInt().coerceIn(0, bmp.height - srcTop)
 
         return Bitmap.createBitmap(bmp, srcLeft, srcTop, srcWidth, srcHeight)
+    }
+
+    private fun constrainCropRectToImageBounds() {
+        val imageBounds = getImageBounds() ?: return
+
+        val dx = when {
+            cropRect.left < imageBounds.left -> imageBounds.left - cropRect.left
+            cropRect.right > imageBounds.right -> imageBounds.right - cropRect.right
+            else -> 0f
+        }
+
+        val dy = when {
+            cropRect.top < imageBounds.top -> imageBounds.top - cropRect.top
+            cropRect.bottom > imageBounds.bottom -> imageBounds.bottom - cropRect.bottom
+            else -> 0f
+        }
+
+        cropRect.offset(dx, dy)
+
+        // Ensure minimum size still applies and we don't go out of bounds after resize
+        cropRect.left = cropRect.left.coerceAtLeast(imageBounds.left)
+        cropRect.top = cropRect.top.coerceAtLeast(imageBounds.top)
+        cropRect.right = cropRect.right.coerceAtMost(imageBounds.right)
+        cropRect.bottom = cropRect.bottom.coerceAtMost(imageBounds.bottom)
+    }
+
+
+    private fun getImageBounds(): RectF? {
+        bitmap?.let {
+            val rect = RectF(0f, 0f, it.width.toFloat(), it.height.toFloat())
+            matrix.mapRect(rect)
+            return rect
+        }
+        return null
     }
 }
