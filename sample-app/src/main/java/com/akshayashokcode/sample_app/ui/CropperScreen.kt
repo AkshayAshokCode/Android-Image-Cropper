@@ -42,7 +42,9 @@ fun CropperScreen() {
 
                 // Load a sample image
                 val bitmap = BitmapFactory.decodeResource(ctx.resources, R.drawable.image)
-                cropperView?.setImageBitmap(bitmap)
+                cropperView?.post{
+                    cropperView?.setImageBitmap(bitmap)
+                }
 
                 view
             },
