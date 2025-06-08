@@ -30,21 +30,25 @@ fun CropperScreen() {
     val context = LocalContext.current
     var croppedBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
-    Column(Modifier.fillMaxSize()
-        .padding(vertical = 50.dp)) {
-        var cropperView: CropperView? = null
+    val cropperViewState = remember { mutableStateOf<CropperView?>(null) }
 
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(vertical = 50.dp)
+    ) {
         AndroidView(
             factory = { ctx ->
                 val inflater = LayoutInflater.from(ctx)
                 val view = inflater.inflate(R.layout.cropper_view_layout, null)
-                cropperView = view.findViewById(R.id.cropperView)
+                val cropperView = view.findViewById<CropperView>(R.id.cropperView)
+                cropperViewState.value = cropperView // 🔐 Save for use in Button click
 
                 // Load a sample image
                 val bitmap = BitmapFactory.decodeResource(ctx.resources, R.drawable.image)
-                cropperView?.post{
-                    cropperView?.setImageBitmap(bitmap)
-                }
+             //   cropperView.post {
+                    cropperView.setImageBitmap(bitmap)
+               // }
 
                 view
             },
@@ -55,7 +59,7 @@ fun CropperScreen() {
 
         Button(
             onClick = {
-                croppedBitmap = cropperView?.getCroppedImage()
+                croppedBitmap = cropperViewState.value?.getCroppedImage()
             },
             modifier = Modifier
                 .fillMaxWidth()
