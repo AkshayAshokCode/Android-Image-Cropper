@@ -19,7 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Android-Image-Cropper"
+rootProject.name = "MediaKit-android"
 //include(":ImageCropper", ":sample-app")
 include(":ImageCropper")
 include(":sample-app")
