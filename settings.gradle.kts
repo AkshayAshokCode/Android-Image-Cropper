@@ -23,3 +23,4 @@ rootProject.name = "Android-Image-Cropper"
 //include(":ImageCropper", ":sample-app")
 include(":ImageCropper")
 include(":sample-app")
+include(":imagepicker")
