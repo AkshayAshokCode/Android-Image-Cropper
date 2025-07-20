@@ -1,4 +1,4 @@
-package com.akshayashokcode.imagepicker.launcher
+package com.akshayashokcode.imagepicker.model
 
 import android.graphics.Bitmap
 import android.net.Uri

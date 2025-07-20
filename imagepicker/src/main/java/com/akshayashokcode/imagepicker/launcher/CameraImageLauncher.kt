@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.contract.ActivityResultContracts
+import com.akshayashokcode.imagepicker.model.ImagePickerResult
 import com.akshayashokcode.imagepicker.util.FileUtils
 import com.akshayashokcode.imagepicker.util.ImageOrientationUtils
 
